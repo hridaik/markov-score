@@ -87,6 +87,36 @@ This is NOT guaranteed to be true — it depends on the specific
 system. The κ coupling could have arbitrarily slow solenoidal 
 circulation if κ is small. Phase 4 tests this empirically.
 
+## O(κ²) scaling of H[0,3] — Phase 0A finding
+
+The Phase 0A sweep showed |H[0,3]| ~ κ^1.93 (≈ κ²), not the 
+O(κ) scaling naive perturbation theory might suggest.
+
+Root cause: the default parameter set has exact Z₂ symmetry 
+η↔μ, s↔a (all γ equal, all c equal). Under this symmetry, 
+Σ₀[0,0] = Σ₀[3,3]. The first-order Lyapunov correction Σ₁ 
+satisfies a Lyapunov equation with forcing term proportional 
+to (Σ₀[3,3] − Σ₀[0,0]), which is identically zero. So 
+Σ₁[0,3] = 0 and H[0,3] = O(κ²).
+
+Consequences for downstream phases:
+- The noise floor in estimation is set by the estimator's 
+  variance, which scales as O(1/√N). The signal grows as 
+  O(κ²). Detection threshold κ_H satisfies κ_H² ~ 1/√N, 
+  giving κ_H ~ N^{-1/4} rather than the O(N^{-1/2}) scaling 
+  expected for a linear signal. Phase 1B and 1C must be 
+  interpreted with this in mind.
+- The gap κ_H − κ_J (where κ_J = 0⁺ since J[0,3] = κ 
+  linearly) will be governed by the quadratic regime. 
+  At N=10,000, expect κ_H ~ 0.1 or larger.
+- This scaling is specific to the symmetric parameter set. 
+  Any future asymmetric parameter variant would restore O(κ) 
+  scaling and shrink κ_H substantially.
+
+This is not a pathology. It is correct physics. If any 
+estimation result shows H[0,3] growing faster than κ², 
+the excess is an estimation artifact.
+
 ## Decisions not yet made
 
 - **Score matching variant:** task.md specifies denoising score 

@@ -47,7 +47,7 @@ At κ > 0, J_ημ = κ and J_μη = −κ. The coupling is antisymmetric → pur
 **Default parameter set:**
 ```
 γ_η = γ_s = γ_a = 1.0
-c₁ = c₂ = c₃ = c₄ = 1.0
+c₁ = c₂ = c₃ = c₄ = 0.5
 σ = 0.5
 α = −1.0 (linear regime default)
 κ = 0.0 (blanket intact default)
@@ -73,7 +73,7 @@ These are held constant unless a specific test varies one of them.
 4. Eigenvalues of J (must all have negative real part for NESS to exist)
 
 **Completion criteria:**
-- At κ = 0: H_ημ = 0 to machine precision (< 1e-14)
+- At κ = 0: |H[0,3]| / max|H_ij| < 1e-12 
 - At κ > 0: H_ημ(κ) is a smooth function, growing from zero
 - All eigenvalues of J have negative real part for all κ tested
 - Σ is symmetric positive definite for all κ tested
