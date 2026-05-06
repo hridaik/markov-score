@@ -117,6 +117,54 @@ This is not a pathology. It is correct physics. If any
 estimation result shows H[0,3] growing faster than κ², 
 the excess is an estimation artifact.
 
+## Lyapunov solution is only approximate ground truth for μ
+
+The Lyapunov solution assumes the linearised Jacobian J[3,3] = α.
+The true μ dynamics include a cubic term that adds restoring force
+beyond the linearisation. At α=−1, the self-consistency equation
+2(1+3E[μ²])Var[μ] = σ² gives Var[μ] ≈ 0.097 vs the Lyapunov
+prediction of 0.125. Empirical samples give H_emp[3,3] ≈ 10.1,
+consistent with the nonlinear value.
+
+Consequence: for the μ-related diagonal and coupling entries,
+use H_emp (sample precision) as ground truth for the nonlinear
+system, not H_lyap. H_lyap is exact only for the linearised
+system. The η, s, a entries are unaffected since their dynamics
+are linear.
+
+## Per-basin asymmetry at α=+1.0 — sampling noise, not physics
+
+The μ<0 basin showed relative H[0,3] = 2.68e-2 (FAIL) against
+9.82e-3 (PASS) for μ>0. Dead-zone split confirmed this persists
+after excluding |μ|<0.1.
+
+The system has exact Z₂ symmetry under (η,s,a,μ)→(−η,−s,−a,−μ),
+so within-basin conditional independence is identical in both
+basins by construction. The gap (0.6 percentage points) is within
+one standard deviation of the expected sampling noise for n≈5000.
+Conclusion: sampling noise, not a real structural asymmetry.
+
+The directed-ring argument (η→s→μ→a→η is not the same backwards)
+does not create per-basin asymmetry because the full 4D sign-flip
+symmetry overrules it. In a genuinely asymmetric system (broken
+Z₂) per-basin asymmetry would be real and worth investigating.
+
+## Phase 0B uses sample precision matrix, not KDE Hessian
+
+The analytic KDE Hessian divides by h⁴, amplifying local sampling
+noise by ~3700× at h=0.128. For entries where the true signal is
+small (H[0,3] is O(10⁻²)), the noise floor after amplification is
+O(1) — the KDE cannot recover those entries at N=10,000 in 4D.
+
+The sample precision matrix H_emp = inv(cov(X)) is the correct
+tool for ground truth in the linear and weakly nonlinear regime.
+For α > 0, apply it per-basin: split samples by sign of μ and
+compute H_emp within each basin separately.
+
+This resolves the Phase 0B scope: it answers whether H_ημ ≈ 0
+globally and per-basin. Pointwise variation of H_ημ(x) across
+state space is addressed naturally in Phase 1B via score matching.
+
 ## Decisions not yet made
 
 - **Score matching variant:** task.md specifies denoising score 

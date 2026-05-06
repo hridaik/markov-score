@@ -303,3 +303,34 @@ The files are the record, not the conversation.
   - Graphical lasso: 10 λ values (not 50) for debugging
   Scale up only after the pipeline works end-to-end at 
   small scale.
+
+## Long-running computation protocol
+
+If a computation is expected to take more than 5 minutes:
+1. Write the script to a file
+2. Print the exact command to run it
+3. STOP — do not run it yourself
+4. Tell the supervisor: "Ready to run. Command: [exact command]. 
+   Expected output: [what file gets written]. 
+   Please run and paste the output."
+
+The supervisor will run the command, paste the result, 
+and give go-ahead to continue.
+
+This applies to re-runs after failures too. If a fix 
+requires re-running something that took >5 minutes 
+the first time, stop and ask.
+
+## Debug spiral rule
+
+If you have made more than one edit to a file without 
+the supervisor seeing an intermediate result, you are 
+in a debug spiral. Stop immediately. 
+
+Before making any further edits:
+1. Run the diagnostic: does A @ p_known_solution ≈ 0?
+   (Check the matrix, not just the solver output)
+2. Report what the diagnostic shows
+3. Wait for go-ahead
+
+You may not change the code and re-run in the same step.
