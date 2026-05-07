@@ -334,3 +334,65 @@ Before making any further edits:
 3. Wait for go-ahead
 
 You may not change the code and re-run in the same step.
+
+## Library-first principle
+
+Before implementing any numerical method from scratch, check 
+whether a maintained Python library provides it. Custom 
+implementations are appropriate only when: (a) no library 
+exists, (b) the library doesn't expose the property we need 
+to verify scientifically (e.g. M-matrix guarantee), or 
+(c) the method is trivially short and the library adds 
+a heavyweight dependency.
+
+If you are about to write an implementation of something 
+with a name — Euler-Maruyama, GMRES, score matching, KDE — 
+stop and state in one sentence why a library is or isn't 
+appropriate before writing any code. If a library is 
+appropriate and you are not using it, that is a DEVIATION 
+and must be logged as such.
+
+## System environment
+
+- **GPU:** NVIDIA L40S-24Q, 24 GB VRAM (20.7 GB free at session start)
+- **CUDA driver:** 535.230.02, CUDA 12.2
+- **PyTorch:** 2.5.1+cu121 (CUDA 12.1 build, compatible with driver)
+- **Python:** 3.12.3, venv at .venv/
+- **CPU:** Linux 6.8.0-110-generic x86_64
+- **Disk:** /home 446GB total, 422GB free (project on /home)
+- **pip install note:** TMPDIR must be set to /home/hkhurana/.pip_tmp
+  for large CUDA packages — /tmp is only 4GB and may be occupied
+  by system files (e.g. Omnissa Horizon agent ~1.2GB)
+
+Specific guidance for this project:
+- SDE integration: sdeint or diffrax are available; 
+  custom EM is acceptable only for simple additive-noise 
+  systems already implemented and validated
+- Stationary FPE: no standard library exposes the sparse 
+  null-vector formulation with M-matrix guarantees; 
+  custom implementation is expected
+- Score matching: check for reference implementations 
+  before writing training loops
+- Sparse precision / graphical lasso: use 
+  sklearn.covariance — do not reimplement
+- KDE with bandwidth selection: use 
+  sklearn.neighbors.KernelDensity or scipy.stats.gaussian_kde 
+  — do not reimplement bandwidth cross-validation
+
+## Environment management
+
+All work runs inside a virtual environment. Before the first 
+code change in any session, verify the venv is active. 
+If it does not exist, create it and install from 
+requirements.txt before doing anything else.
+
+Before adding any new dependency:
+1. State what it provides and why no existing dependency 
+   covers it
+2. Add it to requirements.txt first
+3. pip install into the venv
+4. Verify the install with a one-line import check before 
+   using it in production code
+
+Never install into system Python. Never add a dependency 
+without updating requirements.txt first.

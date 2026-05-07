@@ -165,6 +165,26 @@ This resolves the Phase 0B scope: it answers whether H_ημ ≈ 0
 globally and per-basin. Pointwise variation of H_ημ(x) across
 state space is addressed naturally in Phase 1B via score matching.
 
+## H_lyap underestimates H[0,3] at large κ — same root cause as H[3,3]
+
+The nonlinear self-consistency effect (μ³ stiffens effective
+restoring force, documented for H[3,3]) propagates into
+H[0,3] at large κ. H_emp[0,3] is 3–5× larger than H_lyap[0,3]
+for κ≥0.1. H_emp is the correct reference — it reflects the
+true nonlinear system. H_lyap is the linearised approximation.
+
+Consequence for Phase 1B: correlation and recovery error
+criteria reference H_emp throughout, not H_lyap. The linear
+score network (W* = -Σ̂_σ⁻¹) recovers H_emp exactly in the
+large-sample limit — this is expected and correct.
+
+Broader implication: the linear score network and the sample
+precision matrix are the same estimator reached by different
+routes. The scientific value of the nonlinear score network
+(MLP) lies in Phase 2 where the non-Gaussian density means
+the precision matrix breaks down and the network's nonlinear
+capacity genuinely matters.
+
 ## Decisions not yet made
 
 - **Score matching variant:** task.md specifies denoising score 
