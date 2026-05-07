@@ -165,6 +165,23 @@ This resolves the Phase 0B scope: it answers whether H_ημ ≈ 0
 globally and per-basin. Pointwise variation of H_ημ(x) across
 state space is addressed naturally in Phase 1B via score matching.
 
+## Hessian constancy as a score network calibration diagnostic
+
+For any region where the density is approximately Gaussian
+(near a single attractor, well within a basin), the Hessian
+of log p is approximately constant. A score network's
+pointwise Jacobian should therefore show low variance across
+query points in such a region.
+
+Diagnostic: compute std(H_ij(x)) across query points and
+compare to mean(|H_diag(x)|). If std/mean > 0.1, either
+the network is poorly calibrated or the Gaussian assumption
+fails in that region — distinguish by checking whether std
+decreases with more training or more data.
+
+This check should be run before reporting any blanket
+identification result from a score network.
+
 ## H_lyap underestimates H[0,3] at large κ — same root cause as H[3,3]
 
 The nonlinear self-consistency effect (μ³ stiffens effective
@@ -184,6 +201,28 @@ routes. The scientific value of the nonlinear score network
 (MLP) lies in Phase 2 where the non-Gaussian density means
 the precision matrix breaks down and the network's nonlinear
 capacity genuinely matters.
+
+## Phase 1 arc — what changed from expectations
+
+Phase 1 was designed to validate the pipeline in the easy
+(linear, Gaussian) regime before stressing it in Phase 2.
+The main surprise was that the pipeline collapsed to simpler
+objects than expected. Score matching with a linear network
+is exactly the precision matrix (W* = −Σ̂_σ⁻¹, proven
+analytically). Graphical lasso cannot detect blanket
+violation onset — only blanket structure. The σ-dependence
+of SNR is mild but present (σ^{0.8}), a nonlinear
+self-consistency effect that pervades the system.
+
+The implication for Phase 2: the scientific differentiation
+between methods only appears when the density is non-Gaussian.
+Phase 2 is where score matching (MLP) must earn its place by
+doing something the precision matrix cannot. The key new
+diagnostic is the Hessian constancy check — std of H(x)
+across query points in a region should be small if the
+Gaussian approximation holds there. High std indicates either
+poor network calibration or genuine non-Gaussianity. This
+check gates every Phase 2 result.
 
 ## Decisions not yet made
 

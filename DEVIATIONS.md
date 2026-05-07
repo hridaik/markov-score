@@ -185,6 +185,36 @@ per-point Hessian std in Phase 2 distinguishes genuine
 nonlinear variation from network artifacts.
 **Approved by supervisor:** yes
 
+### DEVIATION 010 — 2026-05-07 — Phase 1D
+**Phase:** 1D
+**Description:** Binary threshold detection (H_EMP_THRESH=0.01,
+EDGE_THRESH=1e-4) produces non-monotone κ_detect across N
+and σ because absolute thresholds don't adapt to the noise
+floor, which changes with both N and σ.
+Specific failures: (a) H_emp relative ratio |H[0,3]|/max is
+non-monotone in κ at small signal (N=10000, κ=0.05 gives
+H_rel=0.0012 < κ=0 noise floor 0.0035); (b) GraphicalLassoCV
+false positives at large N (κ=0 detected at N=10000, 50000)
+because CV selects smaller penalty as N grows, crossing the
+absolute 1e-4 edge threshold; (c) resulting log-log slopes
+H_emp +0.22, glasso 0.00 — both wrong sign/magnitude vs
+expected −0.25.
+**Fix:** Replace binary detection with continuous SNR analysis.
+H_emp SNR: SNR(κ,N) = |H_emp[0,3]| / σ_noise where
+  σ_noise = √(H[0,0]·H[3,3]/N) (analytic) or
+  bootstrap std of H_emp[0,3] at κ=0 (empirical).
+κ_detect defined as SNR = 2 (2σ threshold).
+Glasso: use blanket window width Δλ from λ-sweep
+  (not CV selection) as continuous diagnostic.
+Primary output changes from κ_detect table to:
+  (a) SNR(κ) curves for each N on same axes
+  (b) Collapse plot: SNR vs κ·N^{1/4} — curves overlap if N^{-1/4} scaling
+  (c) Glasso window width Δλ(N) at κ=0 and κ=0.5
+Note: Phase 1D script did not save raw samples. Re-simulation
+at κ=0 (same seed, same samples) used for bootstrap — not new
+data, just re-computing the same deterministic trajectory.
+**Approved by supervisor:** yes
+
 ### Template for recording deviations:
 ```
 ### DEVIATION [number]: [date]
