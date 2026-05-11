@@ -215,6 +215,85 @@ at κ=0 (same seed, same samples) used for bootstrap — not new
 data, just re-computing the same deterministic trajectory.
 **Approved by supervisor:** yes
 
+### DEVIATION 011 — 2026-05-08 — Documentation correction to DEVIATION 009
+**Phase:** 1B / 2 (correction applies to the record only)
+**Description:** DEVIATION 009 states "task.md specifies Tanh MLP for score network."
+This is a documentation error. task.md Phase 1B specifies SiLU activation:
+"MLP, 2 hidden layers, 64 units, SiLU activation." The confusion arose because the
+pre-existing score_network.py stub (written before the Phase 1B linear-network
+decision) used Tanh, and the deviation description conflated the stub with task.md.
+The scientific content of DEVIATION 009 is unaffected: the deviation is that a
+linear network replaced the MLP for Phase 1B, not that Tanh replaced SiLU.
+For Phase 2, the MLP uses SiLU activation throughout, consistent with task.md.
+**Impact on downstream phases:** None — scientific results unchanged.
+**Approved by supervisor:** yes
+
+### DEVIATION 012 — 2026-05-08 — Phase 2A
+**Phase:** 2A
+**Description:** For α > 0, the global ACF criterion (< 0.05 at subsampling lag) is
+replaced by within-basin ACF < 0.05, computed on samples labelled by sign(μ) separately.
+Global ACF at α > 0 reflects inter-basin switching timescale, not within-basin
+decorrelation, and cannot be < 0.05 without simulation lengths orders of magnitude longer.
+Per-basin ACF is the correct decorrelation diagnostic for per-basin H_emp and per-basin
+score evaluation. At α ≤ 0, global ACF criterion applies unchanged. At α = 0
+(bifurcation), global ACF is checked explicitly in the Batch 2 pilot.
+**Justification:** Confirmed empirically in the Phase 2 σ_n ablation at α=+1:
+20,193 basin crossings confirmed good ergodicity, but global ACF exceeded 0.05 due to
+inter-basin switching. The slow mode is the Kramers escape rate, not within-basin
+relaxation. Per-basin ACF correctly characterises the decorrelation relevant to
+within-basin estimation.
+**Impact on downstream phases:** All Phase 2A α > 0 values use per-basin ACF. Phase 2A
+α ≤ 0 values use global ACF (unchanged). Phase 3 and 4 simulations at α > 0 must apply
+the same per-basin criterion.
+**Approved by supervisor:** yes
+
+### DEVIATION 013 — 2026-05-10 — Phase 2A
+**Phase:** 2A
+**Description:** task.md Phase 2A completion criterion states "At α>0, κ=0: per-basin
+H_ημ≈0 even if global H_ημ≠0." This criterion is not achievable as written. Per-basin
+H_emp has two distinct failure regimes discovered during Phase 2A:
+
+(a) ΔU/σ² too small (α=0.25, ΔU/σ²=0.016): the per-basin split by sign(μ) assigns
+a substantial fraction of samples to the separatrix region, contaminating within-basin
+covariance estimates. The estimator produces large spurious H[0,3] (3.3% at α=0.25)
+regardless of blanket status. No amount of additional data resolves this — the
+contamination is structural, not statistical.
+
+(b) Large α (α≥0.75): ACF can pass (subsample=1200, both basins <0.05) but estimates
+from Z₂-symmetric basins diverge by up to 15σ (e.g., −0.047 vs −0.310 at α=1.0),
+locked to the specific trajectory by finite-sample fluctuations. The Z₂ symmetry
+guarantees identical per-basin H[0,3] in the N→∞ limit; convergence to that limit
+requires N_basin~10⁶.
+
+**Fix:** Refined criterion: per-basin H_emp returns H[0,3]≈0 for α where ΔU/σ²
+exceeds the interpretability threshold (empirically between 0.016 and 0.25 in this
+system) AND where N_basin is sufficient for trajectory-fluctuation convergence.
+α=0.50 (ΔU/σ²=0.25, ΔU=0.0625) is the only α>0 value satisfying both conditions
+in the current runs. Score network per-basin Hessian evaluation (query points
+restricted to |μ|>0.3 within-basin samples) is the primary diagnostic for α≥0.75
+— it does not require inverting a sample covariance and does not share the
+finite-sample basin-visit failure.
+**Impact on downstream phases:** Phase 2A completion criterion revised. Phase 2B
+(mixture graphical model) trigger is re-evaluated: the relevant question is now
+whether per-basin MLP Hessian (not H_emp) finds H[0,3]≈0 across the bistable sweep.
+**Approved by supervisor:** yes
+
+### Retrospective note — 2026-05-10 — Phase 1C GLasso window definition
+**Phase:** 1C (retrospective; no re-run)
+**Note:** The 1.034 decade blanket window reported in Phase 1C measured the spread between
+the λ at which H_glasso[0,3] is zeroed and the λ at which H_glasso[1,2] is zeroed. It did
+NOT measure the spread between H[0,3] zeroing and the zeroing of the ring edges (H[0,1],
+H[0,2], H[1,3], H[2,3]), which is the scientifically correct definition: the ring edges
+must stay nonzero for the blanket to be detectable.
+H[1,2] (s–a) is also theoretically zero at κ=0 by d-separation (s⊥a|{η,μ} in the 4-node
+ring), and in Phase 2A's fine λ-scan it is always zeroed before or simultaneously with
+H[0,3]. Including H[1,2] in the "must be nonzero" set makes the window condition
+unsatisfiable. With the corrected definition (ring edges only), the Phase 1C window would
+be wider — the Phase 1C PASS stands and no re-run is needed. The reported 1.034 dec is a
+lower bound on the correctly-defined window.
+**Action taken:** (a) GLasso window definition corrected in phase2A_batch1.py;
+(b) one sentence added to CONTEXT.md; (c) no Phase 1 results changed.
+
 ### Template for recording deviations:
 ```
 ### DEVIATION [number]: [date]

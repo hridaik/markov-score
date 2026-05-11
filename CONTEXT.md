@@ -132,6 +132,17 @@ system, not H_lyap. H_lyap is exact only for the linearised
 system. The η, s, a entries are unaffected since their dynamics
 are linear.
 
+**H_lyap blanket entries are not valid ground truth outside α=−1.**
+H_lyap[0,3]=0 at α=−1 is a Z₂-symmetry coincidence: when |α|=γ_η=1,
+the Jacobian has J[0,0]=J[3,3]=−1 and the off-diagonal Lyapunov blocks
+cancel exactly. At any other α this symmetry is broken and H_lyap[0,3]
+is generically nonzero (computed: −0.308 at α=−0.50, −0.308 at α=−0.25)
+even though J[0,3]=0 means η and μ have no direct coupling. The
+theoretical ground truth for the blanket condition is H[0,3]=0 at κ=0
+for all α, derived from the SDE causal graph. H_emp is the empirical
+reference throughout Phase 2; H_lyap is not used for blanket entries
+at α≠−1. This is a clarification of scope, not a new scientific finding.
+
 ## Per-basin asymmetry at α=+1.0 — sampling noise, not physics
 
 The μ<0 basin showed relative H[0,3] = 2.68e-2 (FAIL) against
@@ -223,6 +234,53 @@ across query points in a region should be small if the
 Gaussian approximation holds there. High std indicates either
 poor network calibration or genuine non-Gaussianity. This
 check gates every Phase 2 result.
+
+The Phase 1C GLasso window (1.034 decades) measured the spread between
+H[0,3] zeroing and H[1,2] zeroing; with the corrected window definition
+(ring edges only as required-nonzero set), the Phase 1C window is a
+lower bound on the correctly-defined window.
+
+## Two failure modes for per-basin analysis in the bistable regime
+
+Per-basin H_emp breaks down in two distinct ways that must not be confused:
+
+**Mode A — Shallow basin / separatrix contamination (α=0.25):**
+ΔU/σ²=0.016. The trajectory mixes basins on every step.
+The per-basin split by sign(μ) is structurally corrupted — roughly half
+the samples labelled "μ>0" are momentary excursions to the μ<0 basin.
+No amount of additional data helps: the contamination rate is set by the
+barrier height and diffusion, not the sample count. Per-basin H_emp is
+undefined here. The correct reference is the global H_emp or the score
+network evaluated at deep-basin query points where the local geometry is
+well-defined even though the global density is not basin-isolated.
+
+**Mode B — Large α / finite-sample trajectory fluctuation (α≥0.75):**
+ΔU/σ² ≫ 1. The basins are deep and well-isolated. But per-basin H_emp
+computed from N_basin ≈ 5,000 samples from a single trajectory diverges
+between basins by up to 15σ of sampling noise. Z₂ symmetry guarantees
+the two basins are identical at N→∞, so the divergence is a finite-sample
+artifact from within-basin serial correlation (τ_mix_basin ≫ τ_mix_global).
+This failure IS curable with more data (N_basin ~ 10⁶), but that is not
+a practical solution for a study running at N=10,000.
+
+**Why the score network MLP does not share Mode B:**
+The MLP learns a continuous function from all N=10,000 points simultaneously.
+The loss signal comes from the full data (most points are near basin centers,
+not at the separatrix). Once trained, the Hessian is evaluated at within-basin
+query points by automatic differentiation — no matrix inversion is performed,
+so there is no inversion of a small per-basin sample covariance. The MLP
+accumulates evidence from both basins simultaneously during training and is
+therefore not subject to the per-basin sample count bottleneck.
+
+**On the ACF pilot unreliability at N_pilot=1000:**
+The per-basin ACF estimator at lag-1 has standard error SE ≈ 1/√n_basin ≈ 0.06
+for n_basin ≈ 250 (half of N_pilot=1000 per basin at sub=1200). This is
+comparable to the 0.05 threshold. At N_pilot=1000, the pilot cannot distinguish
+a true ACF of 0.00 from 0.10 with any reliability. The observed non-monotone
+behavior (sub=800 worse than sub=600 for α=0.75) confirms the pilot is
+dominated by estimator variance rather than the decorrelation mechanism it is
+supposed to probe. The full-run ACF at N=10,000 (SE ≈ 0.014) is the reliable
+diagnostic.
 
 ## Decisions not yet made
 

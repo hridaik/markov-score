@@ -83,3 +83,39 @@ holds only for κ ≪ 0.1 where SNR < 1. The N^{-1/4}
 scaling survives this impurity. σ-dependence mild:
 SNR ~ σ^{0.8} (nonlinear correction; theory predicts
 σ-independence in pure linear regime).
+
+## 7. Per-basin H_emp requires ΔU/σ² ≫ 1 (minimum threshold ~ 0.5–1)
+Per-basin H_emp is only interpretable when each basin is statistically
+isolated from the other. The diagnostic is the barrier-to-noise ratio
+ΔU/σ² where ΔU is the potential barrier between the two wells.
+At α=0.25, ΔU/σ²=0.016 — the two basins are completely mixed and
+the per-basin split by sign(μ) produces contaminated samples where
+roughly half the "μ>0" points are visiting the μ<0 basin.
+At α=0.50, ΔU/σ²=0.172 — isolation is marginal but sufficient for
+a valid H_emp estimate (constancy passes, H[0,3]/max < 0.025).
+Practical threshold: require ΔU/σ² ≥ 0.5 for per-basin H_emp to be
+meaningful. Below this, the per-basin approach cannot be salvaged by
+larger N — the contamination is structural (trajectory mixes basins
+on every step), not statistical.
+Implication for papers using per-basin precision estimates in bistable
+systems: always report ΔU/σ² and confirm it exceeds this threshold.
+
+## 8. Large-α failure mode: per-basin H_emp requires N_basin ~ 10⁶
+In the large-α regime (α≥0.75), the wells are deep (ΔU/σ² ≫ 1) but
+the two basins diverge from each other in their per-basin H_emp by
+up to 15σ of sampling noise. Z₂ symmetry proves the two basins are
+statistically identical in the N→∞ limit, so the divergence is a
+finite-sample trajectory fluctuation: a single N=10,000 trajectory
+may visit basin A 5000 times and basin B 5000 times, but the within-
+basin samples are not iid — they are serially correlated. Effective
+independent sample count per basin ≈ N_basin / τ_mix_basin, where
+τ_mix_basin ≫ τ_mix_global at large α.
+Estimate: achieving 1σ agreement between basins requires
+N_basin ~ τ_mix_basin × (σ_H/ΔH_target)² ~ 10⁶.
+Consequence: per-basin H_emp is not a practical primary diagnostic
+for large α. The score network MLP does not share this failure mode:
+it learns a continuous score function from all N=10,000 points
+simultaneously (most near the basin centers), then evaluates the
+Hessian at within-basin query points analytically. The inversion step
+(which is where sample covariance fails at small per-basin N) is
+never performed.

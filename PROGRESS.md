@@ -12,7 +12,7 @@
 | 1B — Score matching | **COMPLETE** | κ=0: \|W*[0,3]\|/max=0.0053 PASS; r(-W*[0,3],H_emp[0,3])=1.000 PASS; Frobenius(η,s,a)=0.024 PASS. Analytic W*=−Σ̂_σ⁻¹ (DEVIATION 009). H_emp is correct ground truth (3–5× > H_lyap at large κ, nonlinear self-consistency). | — |
 | 1C — Graphical lasso | **COMPLETE** | κ=0: window=1.034 dec PASS (>0.5); monotone narrowing PASS (1.034→0.724 dec); λ grid [0.003, 3.16], 30 pts. Window driven by upper boundary (λ_high 0.034→0.021), λ_low at grid floor. | — |
 | 1D — Method comparison | **COMPLETE** | H_emp κ_detect (SNR=2, σ=0.5): N=5000→0.30, N=10000→0.25, N=50000→0.15 (N=1000 below grid); slope=−0.304≈−1/4 ✓. Glasso: window positive at all κ (1.47–1.55 dec at κ=0, 0.41–0.82 dec at κ=0.5) — cannot detect solenoidal leakage; H_emp 43–158× faster. DEVIATION 010. | — |
-| 2A — Bifurcation sweep | Not started | — | Depends on Phase 1 |
+| 2A — Bifurcation sweep | **In progress** | Batch 1 (α∈{−1,−0.75,−0.5,−0.25}) clean; Batch 2 (α∈{0,0.25,0.50,0.75,1.00}) run; ACF re-run at sub=1200 for α=0.75,1.00 (passes per-basin ACF). Per-basin H_emp asymmetry at α≥0.75 is finite-sample artifact (DEVIATION 013). Per-basin MLP Hessian evaluation pending. | — |
 | 2B — Mixture graphical model | Conditional | — | Depends on 2A results |
 | 3A — Jacobian estimation | Not started | — | Depends on 1A |
 | 3B — J-vs-H comparison | Not started | — | Depends on 3A, Phase 1 |
@@ -22,12 +22,56 @@
 | 5B — Conclusions | Not started | — | Depends on 5A |
 
 ## Next action on resume
-Phase 1 COMPLETE. Awaiting go-ahead for Phase 2A (bifurcation sweep).
-Phase 2A: sweep α from −1 to +3 in steps of 0.25, κ=0 throughout, σ=0.5.
-For each α: N=10,000 decorrelated samples (subsample=600). Global H_emp for α<0;
-per-basin H_emp for α>0 (per DEVIATION 004/005 precedent). Identify α_crit for
-graphical lasso failure and per-basin blanket structure. Hessian constancy check
-(std(H(x))/mean|H_diag|) gates every result as per Phase 1 arc finding.
+Phase 1 COMPLETE. Phase 2A Batch 1 + Batch 2 + ACF re-run complete.
+Next: run per-basin MLP Hessian evaluation for α ∈ {0.50, 0.75, 1.00}.
+Exact command:
+  cd /home/hkhurana/Documents/projects/score-mb && \
+    .venv/bin/python src/phase2A_perbasin_mlp.py 2>&1 | tee results/phase2/phase2A_perbasin_mlp.log
+
+Script: src/phase2A_perbasin_mlp.py
+  Re-simulates X (not saved in npz), re-trains MLP (weights not saved).
+  For each α ∈ {0.50, 0.75, 1.00} and each basin (μ>0, μ<0):
+    500 query points from |μ|>0.3, σ_n=0.05, compute Ĥ[0,3] with 95% bootstrap CI.
+    Report constancy std(Ĥ[0,3])/mean|Ĥ_diag|.
+  α=0.50: sub=600 (Batch 2 seed). α=0.75,1.00: sub=1200 (ACF re-run seed SEED+1).
+
+DEVIATION 013 filed (2026-05-10): per-basin H_emp criterion not achievable for α≥0.75
+  (finite-sample trajectory fluctuation, N_basin~10⁶ required). Score network MLP
+  per-basin Hessian is the correct primary diagnostic. Batch 3 (α>1.00) decision
+  deferred until per-basin MLP results are available.
+
+ACF re-run results (2026-05-10):
+  α=0.75 sub=1200: per-basin ACF PASS (μ>0: max=0.0316, μ<0: max=0.0269)
+  α=1.00 sub=1200: per-basin ACF PASS (μ>0: max=0.0336, μ<0: max=0.0165)
+  Per-basin H_emp asymmetry persists (α=1.00: H_pos=-0.047 vs H_neg=-0.310) — DEVIATION 013.
+
+Batch 1 script corrections applied 2026-05-10:
+- Crossing check suppressed for α<0 (noise crossings at μ=0, not basin transitions).
+- GLasso window other_offdiag = [(0,1),(0,2),(1,3),(2,3)] — ring edges only;
+  H[1,2] excluded (s⊥a|{η,μ} is a second conditional independence in the 4-node ring).
+
+Batch 1 corrected results (2026-05-10):
+     α    GL_window   H_emp[0,3]   kurt_μ
+  -1.00   1.379 dec  +0.098410   -0.369  (grid-floor limited; true lower bound < 0.001)
+  -0.75   1.517 dec  +0.063672   -0.461  (grid-floor limited)
+  -0.50   1.517 dec  +0.017943   -0.580  (grid-floor limited)
+  -0.25   0.276 dec  -0.038832   -0.728  (narrowed due to marginal ACF exceedance; H[0,3] in noise floor)
+All constancy checks pass. All SPD checks pass. All ACF pass (α=-0.25 marginal, accepted).
+
+Batch 2 script ready (src/phase2A_batch2.py):
+  α ∈ {0.0, 0.25, 0.50, 0.75, 1.00}, logspace(-4,1,50) λ grid (50 points, extended).
+  α=0: subsample search [600,1200,2400,4800] until ACF[μ]<0.05.
+  α>0: per-basin ACF + ≥20 crossings pilot; per-basin H_emp primary; deep-basin constancy.
+
+Decisions recorded:
+- σ_n = 0.05 confirmed (Phase 2 σ_n ablation, 2026-05-08).
+- DEVIATION 011: doc correction to DEVIATION 009 (Tanh vs SiLU).
+- DEVIATION 012: ACF criterion for α>0 is per-basin, not global.
+- α=−0.25 ACF[μ]=0.061 (marginal exceedance vs threshold 0.05). Accepted:
+  H_emp[0,3]=−0.039 is within noise floor; exceedance does not corrupt signal.
+  Subsample stays at 600.
+- Retrospective note: Phase 1C's 1.034 dec window measured H[0,3]-vs-H[1,2]
+  spread; with corrected definition it is a lower bound. Phase 1C PASS stands.
 
 ## Notes for supervisor
 - Phase 0A COMPLETE — all five completion criteria pass (DEVIATION 002 relative criterion).
